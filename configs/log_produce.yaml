@@ -1,0 +1,7 @@
+Network: "TCP"
+Address: "112.124.53.234"
+StartConnPool: True
+ConnConfig:
+  Topic:  "chatgpt-web-log"
+  Partition:  3
+  Broker:   3

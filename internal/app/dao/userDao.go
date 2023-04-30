@@ -57,5 +57,4 @@ func QueryUserList(username []string) ([]User, error) {
 }
 
 func QueryUser(username string) (User, error) {
-
 }

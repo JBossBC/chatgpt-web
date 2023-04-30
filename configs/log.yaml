@@ -1,0 +1,10 @@
+Network:
+Address:
+StartConnPool: True
+ConnConfig:
+  ClientID: 
+  Topic:
+  Partition:
+  Broker:
+  Rack:
+  TransactionalID:
