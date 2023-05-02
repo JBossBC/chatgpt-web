@@ -13,6 +13,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const InvalidKeyValue = "@invalid@Key@Value@"
+
 type config struct {
 	Mysql mysqlConfig `yaml:"Mysql"`
 	Redis redisConfig `yaml:"Redis"`

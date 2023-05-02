@@ -133,6 +133,7 @@ func (*userDao) QueryUserList(username []string) ([]User, error) {
 const defaultInsertTimeout = 500 * time.Millisecond
 const defaultQueryTimeout = 500 * time.Millisecond
 const defaultKeyTimeout = 60 * 5 * time.Second
+const defaultInvalidKeyTimeout = 60 * time.Second
 
 func (*userDao) QueryUser(username string) (user User, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultQueryTimeout)
@@ -152,11 +153,17 @@ func (*userDao) QueryUser(username string) (user User, err error) {
 				return user, nil
 			}
 			newRedisConn().SetEx(context.Background(), username, jsonRes, defaultKeyTimeout)
+			return user, nil
+		} else {
+			//cache
+			newRedisConn().SetEx(context.Background(), username, InvalidKeyValue, defaultInvalidKeyTimeout)
+			return user, fmt.Errorf("用户名不存在")
 		}
-		return user, nil
-	} else {
+	} else if result != InvalidKeyValue {
 		err = json.Unmarshal([]byte(result), &user)
 		klog.Error(fmt.Sprintf("json unmarshal error: %s(%s)", err.Error(), result))
 		return user, nil
+	} else {
+		return user, fmt.Errorf("用户名不存在")
 	}
 }

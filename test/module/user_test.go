@@ -8,7 +8,7 @@ import (
 
 func TestUserInsert(t *testing.T) {
 	fmt.Println(dao.NewUserDao().InsertUser(dao.User{
-		Username:      "test",
+		Username:      "xiyang",
 		Password:      "123456",
 		PhoneNumber:   "18080705675",
 		Level:         "normal",
@@ -16,7 +16,7 @@ func TestUserInsert(t *testing.T) {
 	}))
 }
 func TestUserQuery(t *testing.T) {
-	fmt.Println(dao.NewUserDao().QueryUser("test"))
+	fmt.Println(dao.NewUserDao().QueryUser("xiyang"))
 }
 
 func TestUserUpdate(t *testing.T) {
