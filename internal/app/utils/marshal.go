@@ -77,7 +77,7 @@ func UnMarshal(value reflect.Value) (map[string]interface{}, error) {
 			}
 			result[curElem.Type().Name()] = value
 		case reflect.Bool:
-			result[curElem.Type().Name] = curElem.Bool()
+			result[curElem.Type().Name()] = curElem.Bool()
 		case reflect.Uint, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint8:
 			result[curElem.Type().Name()] = curElem.Uint()
 		case reflect.Array, reflect.Slice:
