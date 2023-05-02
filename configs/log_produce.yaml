@@ -1,5 +1,5 @@
 Network: "tcp"
-Address: "112.124.53.234:9093"
+Address: "112.124.53.234:9092"
 StartConnPool: True
 ConnConfig:
   Topic:  "chatgpt-web-log"

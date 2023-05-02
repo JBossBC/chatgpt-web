@@ -15,7 +15,7 @@ import (
 //TODO password encrypto
 type User struct {
 	Id            uint64     `gorm:"column:id;primaryKey;<-:false"`
-	Username      string     `gorm:"column:username"`
+	Username      string     `gorm:"column:username;index:"`
 	Password      string     `gorm:"column:password"`
 	PhoneNumber   string     `gorm:"column:phoneNumber"`
 	Level         string     `gorm:"column:Level"`
