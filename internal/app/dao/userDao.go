@@ -1,22 +1,32 @@
 package dao
 
 import (
+	klog "chatgpt-web/internal/app/log"
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
+
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 )
 
+//TODO password encrypto
 type User struct {
-	Id            uint64    `gorm:"column:id;primaryKey;<-:false"`
-	Username      string    `gorm:"column:username"`
-	Password      string    `gorm:"column:password"`
-	PhoneNumber   string    `gorm:"column:phoneNumber"`
-	Level         string    `gorm:"column:Level"`
-	LevelDeadline time.Time `gorm:"column:levelDeadline"`
-	Create_time   time.Time `gorm:"column:createTime"`
-	Update_time   time.Time `gorm:"column:updateTime"`
-	Delete_time   time.Time `gorm:"column:deleteTime"`
+	Id            uint64     `gorm:"column:id;primaryKey;<-:false"`
+	Username      string     `gorm:"column:username"`
+	Password      string     `gorm:"column:password"`
+	PhoneNumber   string     `gorm:"column:phoneNumber"`
+	Level         string     `gorm:"column:Level"`
+	LevelDeadline *time.Time `gorm:"column:levelDeadline"`
+	Create_time   *time.Time `gorm:"column:createTime"`
+	Update_time   *time.Time `gorm:"column:updateTime"`
+	Delete_time   *time.Time `gorm:"column:deleteTime"`
+}
+
+func init() {
+	newMysqlConn().AutoMigrate(&User{})
 }
 
 func NewUser(username string) User {
@@ -31,86 +41,122 @@ func (user *User) WithPhoneNumber(phoneNumber string) {
 	user.PhoneNumber = phoneNumber
 }
 func (user *User) WithLevelDeadline(time time.Time) {
-	user.LevelDeadline = time
+	user.LevelDeadline = &time
 }
 func (user *User) WithPassword(password string) {
 	user.Password = password
 }
 func (user *User) WithCreateTime(time time.Time) {
-	user.Create_time = time
+	user.Create_time = &time
 }
 func (user *User) WithUpdateTime(time time.Time) {
-	user.Update_time = time
+	user.Update_time = &time
 }
 func (user *User) WithDeleteTime(time time.Time) {
-	user.Delete_time = time
+	user.Delete_time = &time
 }
 
-func InsertUser(user User) error {
+type userDao struct {
+}
+
+var (
+	user *userDao
+	once sync.Once
+)
+
+func NewUserDao() *userDao {
+	once.Do(func() {
+		user = &userDao{}
+	})
+	return user
+}
+
+func (*userDao) InsertUser(user User) error {
 	var existUser User
-	err := NewMysqlConn().Select("username").Where("username=? and deleteTime=Null", user.Username).First(&existUser).Error
-	if err != nil {
+	err := newMysqlConn().Select("username").Where("username=? and deleteTime is NULL ", user.Username).First(&existUser).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return fmt.Errorf("系统错误，请稍后重试")
 	}
 	var exists = existUser != User{}
 	if !exists {
-		err = NewMysqlConn().Create(&user).Error
+		err = newMysqlConn().Create(&user).Error
 		if err != nil {
+			klog.Error(err)
 			return fmt.Errorf("系统错误，请稍后重试")
 		}
+		klog.Print(fmt.Sprintf("创建用户成功: %v", user))
 		ctx, cancel := context.WithTimeout(context.Background(), defaultQueryTimeout)
 		defer cancel()
 		jsonRes, err := json.Marshal(&user)
 		if err != nil {
+			klog.Error(err)
 			return nil
 		}
-		NewRedisConn().SetEx(ctx, user.Username, jsonRes, 10*time.Second)
+		newRedisConn().SetEx(ctx, user.Username, jsonRes, defaultKeyTimeout)
 	} else {
 		return fmt.Errorf("用户名已存在")
 	}
 	return nil
 }
-func UpdateUser(user User) error {
-	err := NewMysqlConn().Where("username=?", user.Username).Updates(user).Error
+func (*userDao) UpdateUser(user User) error {
+	err := newMysqlConn().Where("username=?", user.Username).Updates(user).Error
 	if err != nil {
+		klog.Error(err)
 		return fmt.Errorf("系统错误，请稍后重试")
 	}
-	val, err := NewRedisConn().Del(context.Background(), user.Username).Result()
-	if err == nil {
-		var delay = func() {
-			val, err := NewRedisConn().Del(context.Background(), user.Username).Result()
-		}
-	}
-}
-func DeleteUser(user User) error {
+	klog.Print(fmt.Sprintf("修改用户成功:%v", user))
+	_, err = newRedisConn().Del(context.Background(), user.Username).Result()
+	//TODO defer query task
+	if err != nil && err != redis.Nil {
 
+	}
+	return nil
 }
-func QueryUserList(username []string) ([]User, error) {
+func (*userDao) DeleteUser(user User) error {
+	err := newMysqlConn().Where("username=?", user.Username).Update("deleteTime", time.Now()).Error
+	if err != nil {
+		klog.Error(err)
+		return fmt.Errorf("系统错误，请稍后重试")
+	}
+	klog.Print(fmt.Sprintf("软删除用户成功: %v", user))
+	_, err = newRedisConn().Del(context.Background(), user.Username).Result()
+	//TODO defer query task
+	if err != nil && err != redis.Nil {
+
+	}
+	return nil
+}
+func (*userDao) QueryUserList(username []string) ([]User, error) {
+	return nil, nil
 }
 
 const defaultInsertTimeout = 500 * time.Millisecond
 const defaultQueryTimeout = 500 * time.Millisecond
+const defaultKeyTimeout = 60 * 5 * time.Second
 
-func QueryUser(username string) (user User, err error) {
+func (*userDao) QueryUser(username string) (user User, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultQueryTimeout)
 	defer cancel()
-	result, _ := NewRedisConn().Get(ctx, username).Result()
+	result, err := newRedisConn().Get(ctx, username).Result()
 	if result == "" {
-		err := NewMysqlConn().Where("username=? and deleteTime=Null ", username).First(&user).Error
-		if err != nil {
+		err := newMysqlConn().Where("username=? and deleteTime is NULL ", username).First(&user).Error
+		if err != nil && err != gorm.ErrRecordNotFound {
+			klog.Error(err)
 			return user, fmt.Errorf("系统繁忙,请稍后重试")
 		}
 		isZero := user == User{}
 		if !isZero {
 			jsonRes, err := json.Marshal(user)
 			if err != nil {
-				return user, err
+				klog.Error(err)
+				return user, nil
 			}
-			NewRedisConn().SetEx(context.Background(), username, jsonRes, 10*time.Second)
+			newRedisConn().SetEx(context.Background(), username, jsonRes, defaultKeyTimeout)
 		}
-		return user, err
+		return user, nil
 	} else {
 		err = json.Unmarshal([]byte(result), &user)
+		klog.Error(fmt.Sprintf("json unmarshal error: %s(%s)", err.Error(), result))
+		return user, nil
 	}
-	return user, err
 }

@@ -1,6 +1,6 @@
 Mysql:
   Url: "root:root@tcp(112.124.53.234:3306)/chatgpt-web?charset=utf8mb4&parseTime=True&loc=Local"
 Redis:
-  Address:
-  Database:
-  Password:
+  Address: "112.124.53.234:6379"
+  Database:  8
+  Password: "root"

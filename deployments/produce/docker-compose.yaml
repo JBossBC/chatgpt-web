@@ -37,3 +37,21 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     restart: always
+  mysql:
+    image: mysql:8.0.23
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chatgpt-web
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+  
+  redis:
+    image: redis:6.2.3
+    command: redis-server --requirepass root
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data 

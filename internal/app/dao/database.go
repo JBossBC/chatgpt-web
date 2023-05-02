@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hyperledger/fabric-sdk-go/pkg/context"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v3"
 	"gorm.io/driver/mysql"
@@ -15,17 +14,17 @@ import (
 )
 
 type config struct {
-	mysql mysqlConfig `yaml:"Mysql"`
-	redis redisConfig `yaml:"redis"`
+	Mysql mysqlConfig `yaml:"Mysql"`
+	Redis redisConfig `yaml:"Redis"`
 }
 
 type mysqlConfig struct {
-	url string `yaml:"Url"`
+	Url string `yaml:"Url"`
 }
 type redisConfig struct {
-	address  string `yaml:"Address"`
-	database int    `yaml:"Database"`
-	password string `yaml:Password`
+	Address  string `yaml:"Address"`
+	Database int    `yaml:"Database"`
+	Password string `yaml:"Password"`
 }
 
 var databaseConfig = &config{}
@@ -34,12 +33,16 @@ var gormDB *gorm.DB
 
 var redisClient *redis.Client
 
+//TODO envrionment difference
 func init() {
 	sb := strings.Builder{}
+	// wd, err := os.Getwd()
+	sb.WriteString("D:\\chatgpt-web")
+	sb.WriteRune(filepath.Separator)
 	sb.WriteString("configs")
 	sb.WriteRune(filepath.Separator)
 	//TODO command line params to set
-	sb.WriteString("log_produce.yaml")
+	sb.WriteString("database_produce.yaml")
 	file, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic(err.Error())
@@ -48,14 +51,14 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("database init error:%s", err.Error()))
 	}
-	gormDB, err = gorm.Open(mysql.Open(databaseConfig.mysql.url), &gorm.Config{})
+	gormDB, err = gorm.Open(mysql.Open(databaseConfig.Mysql.Url), &gorm.Config{})
 	if err != nil {
-		panic(fmt.Errorf("mysql connection init error:%s", err.Error()))
+		panic(fmt.Errorf("mysql connection %s init error:%s ", databaseConfig.Mysql.Url, err.Error()))
 	}
 	redisClient = redis.NewClient(&redis.Options{
-		Addr:     databaseConfig.redis.address,
-		Password: databaseConfig.redis.password,
-		DB:       databaseConfig.redis.database,
+		Addr:     databaseConfig.Redis.Address,
+		Password: databaseConfig.Redis.Password,
+		DB:       databaseConfig.Redis.Database,
 	})
 	err = redisClient.Ping(context.Background()).Err()
 	if err != nil {
@@ -63,8 +66,10 @@ func init() {
 	}
 }
 
-func NewMysqlConn() *gorm.DB {
+func newMysqlConn() *gorm.DB {
 	return gormDB
 }
 
-func NewRedisConn()
+func newRedisConn() *redis.Conn {
+	return redisClient.Conn()
+}

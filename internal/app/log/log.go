@@ -45,6 +45,7 @@ var config LogConfig = LogConfig{
 	Network: defaultNetwork,
 }
 
+//TODO envrionment difference
 func init() {
 	value := os.Getenv("chatgpt-web")
 	if value == "" {
