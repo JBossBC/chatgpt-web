@@ -8,11 +8,31 @@ import (
 	"unsafe"
 )
 
+const HighPriority uint8 = 255
+
+const MiddlerPriority uint8 = 128
+
+const LowPriority uint8 = 0
+
+var queue *retryQueue
+
+const defaultDelayTimePerTimes = 200 * time.Millisecond
+
+//auto begin the retryQueue
+func init() {
+	queue = NewRetryQuery(defaultDelayTimePerTimes)
+	go queue.Run()
+}
+
+func AddTask(function func() error, priority uint8) {
+	queue.AddTask(function, priority)
+}
+
 const defaultConcurrencyNumber = 5
 const defaultMaxRetryTimesPerTime = 3
 const defaultMaxSleepTime = 3 * time.Second
 
-type retryQuery struct {
+type retryQueue struct {
 	//arena atomic operation
 	rw                   sync.RWMutex
 	arena                taskArena
@@ -26,26 +46,26 @@ type retryQuery struct {
 	remained chan struct{}
 	loaf     bool
 }
-type Option func(retryQuery *retryQuery)
+type Option func(retryQuery *retryQueue)
 
 func WithConcurrencyNumber(number int32) Option {
-	return func(retryQuery *retryQuery) {
+	return func(retryQuery *retryQueue) {
 		retryQuery.workerNumber = number
 	}
 }
 func WithMaxSleepTime(time time.Duration) Option {
-	return func(retryQuery *retryQuery) {
+	return func(retryQuery *retryQueue) {
 		retryQuery.maxSleepTime = time
 	}
 }
 func WithMaxRetryTimesPerTime(number int32) Option {
-	return func(retryQuery *retryQuery) {
+	return func(retryQuery *retryQueue) {
 		retryQuery.maxRetryTimesPerTime = number
 	}
 }
 
-func NewRetryQuery(retryDelay time.Duration, options ...Option) *retryQuery {
-	res := &retryQuery{
+func NewRetryQuery(retryDelay time.Duration, options ...Option) *retryQueue {
+	res := &retryQueue{
 		workerNumber:         defaultConcurrencyNumber,
 		maxRetryTimesPerTime: defaultMaxRetryTimesPerTime,
 		arena:                make(taskArena, 0),
@@ -72,7 +92,7 @@ func NewRetryQuery(retryDelay time.Duration, options ...Option) *retryQuery {
 
 type worker struct {
 	index      int32
-	query      *retryQuery
+	query      *retryQueue
 	task       *task
 	retryTimes int32
 	retryDelay time.Duration
@@ -84,7 +104,6 @@ func (worker *worker) addTask(task *task) {
 
 func (work *worker) work() {
 	// request work
-
 	var curRetryTimes = 0
 	if work.task == nil {
 		panic("concurrent RetryQuery panic")
@@ -95,7 +114,9 @@ func (work *worker) work() {
 			break
 		} else {
 			if curRetryTimes+1 >= int(work.retryTimes) {
+				work.query.rw.Lock()
 				heap.Push(&work.query.arena, work.task)
+				work.query.rw.Unlock()
 				break
 			}
 		}
@@ -109,10 +130,10 @@ type taskArena []*task
 
 type task struct {
 	exec     func() error
-	priority int8
+	priority uint8
 }
 
-func (query *retryQuery) check() {
+func (query *retryQueue) check() {
 	if !atomic.CompareAndSwapUintptr((*uintptr)(&query.nocopy), uintptr(0), uintptr(unsafe.Pointer(query))) && unsafe.Pointer(query.nocopy) != unsafe.Pointer(query) {
 		panic("task copy")
 	}
@@ -131,7 +152,7 @@ func (arena taskArena) Less(i, j int) bool {
 	if jPriority != nil {
 		jValue = int(jPriority.priority)
 	}
-	return iValue > jValue
+	return iValue >= jValue
 }
 func (arena taskArena) Len() int {
 	return len(arena)
@@ -151,7 +172,7 @@ func (arena *taskArena) Pop() interface{} {
 	*arena = old[0 : n-1]
 	return x
 }
-func (query *retryQuery) AddTask(function func() error, priority int8) {
+func (query *retryQueue) AddTask(function func() error, priority uint8) {
 	query.check()
 	query.rw.Lock()
 	defer query.rw.Unlock()
@@ -163,32 +184,13 @@ func (query *retryQuery) AddTask(function func() error, priority int8) {
 	query.loaf = false
 }
 
-func (query *retryQuery) Run() {
+func (query *retryQueue) Run() {
 	var baseWaitTime = 1 * time.Millisecond
 	var nowWaitTime = baseWaitTime
 	var times = 1
 	for {
 		select {
-		case workIndex := <-query.signal:
-			query.rw.Lock()
-			var cur *task
-			flag := len(query.arena) <= 0
-			if !flag {
-				cur = query.arena.Pop().(*task)
-			}
-			query.rw.Unlock()
-			if flag {
-				query.loaf = true
-				query.remained <- struct{}{}
-				//return the idle work
-				query.signal <- workIndex
-				continue
-			} else {
-				query.work[workIndex].addTask(cur)
-				go query.work[workIndex].work()
-			}
 		case <-query.remained:
-			time.Sleep(nowWaitTime)
 			if query.loaf {
 				nowWaitTime = baseWaitTime * (1 << times)
 				if nowWaitTime > query.maxSleepTime {
@@ -199,6 +201,27 @@ func (query *retryQuery) Run() {
 			} else {
 				nowWaitTime = baseWaitTime
 				times = 1
+			}
+			time.Sleep(nowWaitTime)
+		case workIndex := <-query.signal:
+			query.rw.Lock()
+			var cur *task
+			flag := len(query.arena) <= 0
+			if !flag {
+				cur = query.arena.Pop().(*task)
+			}
+			query.rw.Unlock()
+			if flag {
+				query.loaf = true
+				if len(query.remained) == 0 {
+					query.remained <- struct{}{}
+				}
+				//return the idle work
+				query.signal <- workIndex
+				continue
+			} else {
+				query.work[workIndex].addTask(cur)
+				go query.work[workIndex].work()
 			}
 
 		}

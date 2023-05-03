@@ -4,6 +4,7 @@ import (
 	"chatgpt-web/internal/app/dao"
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestUserInsert(t *testing.T) {
@@ -12,11 +13,11 @@ func TestUserInsert(t *testing.T) {
 		Password:      "123456",
 		PhoneNumber:   "18080705675",
 		Level:         "normal",
-		LevelDeadline: nil,
+		LevelDeadline: time.Time{},
 	}))
 }
 func TestUserQuery(t *testing.T) {
-	fmt.Println(dao.NewUserDao().QueryUser("test"))
+	fmt.Println(dao.NewUserDao().QueryUser("longshao"))
 }
 
 func TestUserUpdate(t *testing.T) {
@@ -24,4 +25,11 @@ func TestUserUpdate(t *testing.T) {
 		Username: "test",
 		Password: "3333444",
 	}))
+}
+func TestUserDelete(t *testing.T) {
+	fmt.Println(dao.NewUserDao().DeleteUser(dao.User{
+		Username: "longshao",
+		Password: "3333444",
+	}))
+	time.Sleep(5 * time.Second)
 }
