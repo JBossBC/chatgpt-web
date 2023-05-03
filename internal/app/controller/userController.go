@@ -2,6 +2,7 @@ package controller
 
 import (
 	"chatgpt-web/internal/app/service"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,7 +11,7 @@ type UserData struct {
 	View
 }
 
-func loginHandler(context *gin.Context) {
+func LoginHandler(context *gin.Context) {
 	// get
 	username := context.Query("username")
 	password := context.Query("password")
@@ -21,4 +22,15 @@ func loginHandler(context *gin.Context) {
 
 	service.NewUserService().Login(map[string]interface{}{"username": username, "password": password})
 
+}
+
+func RegisterHandler(context *gin.Context) {
+	username := context.Query("username")
+	password := context.Query("password")
+	phone_number := context.Query("PhoneNumber")
+	if username == "" || password == "" {
+		context.AbortWithStatusJSON(400, GetBadResponse(400, "账号和密码为空"))
+		return
+	}
+	service.NewUserService().Register(map[string]interface{}{"username": username, "password": password, "PhoneNumber": phone_number, "Level": "nomal", "Create_time": time.Now(), "Update_time": time.Now()})
 }

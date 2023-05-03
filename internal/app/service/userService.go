@@ -46,15 +46,21 @@ func (*UserService) Login(data map[string]interface{}) (info string) {
 		return "登录成功"
 	}
 }
-func (*UserService) Register(user dao.User) (info string) {
+func (*UserService) Register(data map[string]interface{}) (info string) {
 	defer func() {
 		if err := recover(); err != nil {
 			klog.Fatal(err)
 			info = "系统错误"
 		}
 	}()
+	value, err := utils.Marshal(data, reflect.TypeOf(dao.User{}))
+	if err != nil {
+		klog.Error(err)
+		return "系统错误"
+	}
+	user := *value.Interface().(*dao.User)
 	user.Password = utils.Encryption(user.Password)
-	err := dao.NewUserDao().InsertUser(user)
+	err = dao.NewUserDao().InsertUser(user)
 	if err != nil {
 		return err.Error()
 	}

@@ -5,7 +5,17 @@ import (
 	"reflect"
 )
 
+// ban the normal type exists pointer type
 func Marshal(data map[string]interface{}, structTemplate reflect.Type) (result reflect.Value, err error) {
+	defer func() {
+		if errRecover := recover(); errRecover != nil {
+			err = fmt.Errorf("utils.Marshal analsis failed:%v", errRecover)
+		}
+	}()
+	if structTemplate.Kind() == reflect.Map {
+		newResult := data
+		return reflect.ValueOf(newResult), nil
+	}
 	result = reflect.New(structTemplate).Elem()
 	fieldNumber := structTemplate.NumField()
 	for i := 0; i < fieldNumber; i++ {
@@ -15,31 +25,48 @@ func Marshal(data map[string]interface{}, structTemplate reflect.Type) (result r
 		fieldStruct := structTemplate.Field(i)
 
 		if value, ok := data[fieldStruct.Name]; ok {
-			elemType := fieldStruct.Type.Kind()
-			switch elemType {
+			elemType := fieldStruct.Type
+			var isPtr = false
+			switch elemType.Kind() {
 			case reflect.Ptr:
-				var subMap map[string]interface{}
-				if subMap, ok = value.(map[string]interface{}); !ok {
-					return result, fmt.Errorf("%s should be map[string]interface{} type", elemType)
-				}
-				subValue, err := Marshal(subMap, fieldStruct.Type.Elem())
-				if err != nil {
-					return result, err
-				}
-				result.Field(i).Set(subValue)
+				// var subMap map[string]interface{}
+				// if subMap, ok = value.(map[string]interface{}); !ok {
+				// 	return result, fmt.Errorf("%s should be map[string]interface{} type", elemType)
+				// }
+				// subValue, err := Marshal(subMap, fieldStruct.Type.Elem())
+				// if err != nil {
+				// 	return result, err
+				// }
+				// result.Field(i).Set(subValue)
+				elemType = fieldStruct.Type.Elem()
+				isPtr = true
+				fallthrough
 			case reflect.Struct:
-				subMap, err := UnMarshal(reflect.ValueOf(value))
+				var actualStruct map[string]interface{}
+				if mapRes, ok := value.(map[string]interface{}); ok {
+					actualStruct = mapRes
+				} else {
+					if isPtr {
+						value = &value
+					}
+					result.Field(i).Set(reflect.ValueOf(value))
+					continue
+				}
+				subStruct, err := Marshal(actualStruct, fieldStruct.Type)
 				if err != nil {
 					return result, err
 				}
-
-				subValue, err := Marshal(subMap, fieldStruct.Type)
+				result.Field(i).Set(subStruct)
+			case reflect.Map:
+				subValue, err := Marshal(value.(map[string]interface{}), fieldStruct.Type)
 				if err != nil {
 					return result, err
 				}
 				result.Field(i).Set(subValue)
 			case reflect.Invalid:
 				return result, fmt.Errorf("%s is invalid type", elemType)
+			case reflect.Chan:
+				panic("cant support chan type,defend the memoey safe")
 			default:
 				result.Field(i).Set(reflect.ValueOf(value))
 			}

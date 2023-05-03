@@ -12,7 +12,7 @@ type Class struct {
 	Id         string
 	ClassId    int
 	Master     Teacher
-	CreateTime time.Timer
+	CreateTime time.Time
 }
 type Teacher struct {
 	Name string
@@ -26,5 +26,5 @@ func TestMapMarshal(t *testing.T) {
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	fmt.Printf("%v", value.Interface().(Class).CreateTime)
+	fmt.Printf("%v", value)
 }
