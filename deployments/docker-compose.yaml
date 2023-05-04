@@ -65,10 +65,14 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx_produce.conf:/etc/nginx/nginx.conf
+      - ../configs/nginx/nginx_produce.conf:/etc/nginx/nginx.conf
       - ./server.crt:/usr/server.crt
       - ./server.key:/usr/server.key
-      - /opt/chatgpt-web/web/dist/:/usr/share/nginx/
+  web:
+    build: ./server/fontend.dockerfile
+    ports:
+      - "3000:3000"
+
 
 volumes:
   mysql_data:
