@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3'
 
 services:
   zookeeper:
@@ -21,6 +21,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://112.124.53.234:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     restart: always
 
@@ -36,6 +37,7 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://112.124.53.234:9093
     restart: always
   mysql:
     image: mysql:8.0.23
@@ -47,11 +49,27 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
-  
+    restart: always
+    security_opt:
+      - seccomp:unconfined  
   redis:
     image: redis:6.2.3
     command: redis-server --requirepass root
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data 
+      - redis_data:/data
+    restart: always
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx_produce.conf:/etc/nginx/nginx.conf
+      - ./server.crt:/usr/server.crt
+      - ./server.key:/usr/server.key
+      - /opt/chatgpt-web/web/dist/:/usr/share/nginx/
+
+volumes:
+  mysql_data:
+  redis_data: 
