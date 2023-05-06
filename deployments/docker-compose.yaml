@@ -9,6 +9,8 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
       - "2181:2181"
+    networks:
+      - chatgpt-web    
       
   broker1:
     image: confluentinc/cp-kafka
@@ -21,11 +23,12 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker1:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
       KAFKA_CREATE_TOPICS: "chatgpt-web-log"
     restart: always
+    networks:
+      - chatgpt-web  
 
   broker2:
     image: confluentinc/cp-kafka
@@ -39,8 +42,10 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker2:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://0.0.0.0:9093
     restart: always
+    networks:
+      - chatgpt-web  
   mysql:
     image: mysql:8.0.23
     environment:
@@ -54,6 +59,8 @@ services:
     restart: always
     security_opt:
       - seccomp:unconfined  
+    networks:
+      - chatgpt-web  
   redis:
     image: redis:6.2.3
     command: redis-server --requirepass root
@@ -62,6 +69,8 @@ services:
     volumes:
       - redis_data:/data
     restart: always
+    networks:
+      - chatgpt-web  
   nginx:
     image: nginx:latest
     ports:
@@ -70,6 +79,8 @@ services:
       - ../configs/nginx/nginx_produce.conf:/etc/nginx/nginx.conf
       - ./server.crt:/usr/server.crt
       - ./server.key:/usr/server.key
+    networks:
+      - chatgpt-web    
   web:
     container_name: fontend
     build: 
@@ -78,8 +89,9 @@ services:
     restart: always  
     ports:
       - "3000:3000"
+    networks:
+      - chatgpt-web    
   backend:
-    
     container_name: backend
     build: 
        dockerfile: ./deployments/produce/server/backend.dockerfile   
@@ -91,7 +103,17 @@ services:
       - broker1
       - broker2
       - mysql
-      - redis   
+      - redis 
+    networks:
+      - chatgpt-web  
+
+networks:
+  chatgpt-web:
+    driver: bridge
+    ipam:
+      config:
+      - subnet: 127.20.0.0/16
+ 
 
 
 volumes:
