@@ -17,5 +17,5 @@ func main() {
 		userGroup.POST("/register", controller.RegisterHandler)
 		userGroup.GET("/login", controller.LoginHandler)
 	}
-	engine.Run()
+	engine.Run(":8080")
 }

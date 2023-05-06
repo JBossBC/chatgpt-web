@@ -70,13 +70,13 @@ services:
       - ./server.key:/usr/server.key
   web:
     build: 
-      dockerfile: ./produce/server/fontend.dockerfile
+      dockerfile: ./deployments/produce/server/fontend.dockerfile
       context: ../
     ports:
       - "3000:3000"
   backend:
     build: 
-       dockerfile: "./produce/server/backend.dockerfile"   
+       dockerfile: ./deployments/produce/server/backend.dockerfile   
        context: ../ 
     ports:
       - "8080:8080"
