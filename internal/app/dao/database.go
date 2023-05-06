@@ -39,9 +39,7 @@ var redisClient *redis.Client
 func init() {
 	sb := strings.Builder{}
 	// wd, err := os.Getwd()
-	sb.WriteString("D:\\chatgpt-web")
-	sb.WriteRune(filepath.Separator)
-	sb.WriteString("configs")
+	sb.WriteString("./configs")
 	sb.WriteRune(filepath.Separator)
 	//TODO command line params to set
 	sb.WriteString("database_produce.yaml")

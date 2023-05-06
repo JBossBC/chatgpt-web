@@ -69,9 +69,17 @@ services:
       - ./server.crt:/usr/server.crt
       - ./server.key:/usr/server.key
   web:
-    build: ./server/fontend.dockerfile
+    build: 
+      dockerfile: ./produce/server/fontend.dockerfile
+      context: ../
     ports:
       - "3000:3000"
+  backend:
+    build: 
+       dockerfile: "./produce/server/backend.dockerfile"   
+       context: ../ 
+    ports:
+      - "8080:8080"
 
 
 volumes:

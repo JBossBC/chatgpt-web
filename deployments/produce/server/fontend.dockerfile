@@ -2,14 +2,14 @@ FROM node:lts-alpine
 
 WORKDIR /app
 
-COPY ../../../web/package.json ./
+COPY ./web/package.json ./
 
 RUN npm install
 
-COPY ../../../web .
+COPY ./web/ .
 
 RUN npm run build
 
 EXPOSE 3000
 
-CMD [ "npm", "run", "serve" ]
+CMD [ "npm", "run", "dev" ]

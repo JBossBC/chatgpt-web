@@ -123,7 +123,12 @@ func (*userDao) DeleteUser(user User) error {
 		Username:    user.Username,
 		Delete_time: time.Now(),
 	}
-	err := newMysqlConn().Where("username=?", user.Username).Updates(deleteUser).Error
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return fmt.Errorf("系统出了一点小差，请稍后")
+	}
+	deleteUser.Delete_time = deleteUser.Delete_time.In(loc)
+	err = newMysqlConn().Where("username=?", user.Username).Updates(deleteUser).Error
 	if err != nil {
 		klog.Error(err)
 		return fmt.Errorf("系统错误，请稍后重试")

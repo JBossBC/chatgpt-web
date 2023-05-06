@@ -57,9 +57,7 @@ func init() {
 	// }
 	absPath := strings.Builder{}
 	// absPath.WriteString(dir)
-	absPath.WriteString("D:\\chatgpt-web")
-	absPath.WriteRune(filepath.Separator)
-	absPath.WriteString("configs")
+	absPath.WriteString("./configs")
 	absPath.WriteRune(filepath.Separator)
 	absPath.WriteString(value)
 	absPath.WriteString(".yaml")

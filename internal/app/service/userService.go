@@ -6,6 +6,7 @@ import (
 	"chatgpt-web/internal/app/utils"
 	"reflect"
 	"sync"
+	"time"
 )
 
 var (
@@ -60,6 +61,14 @@ func (*UserService) Register(data map[string]interface{}) (info string) {
 	}
 	user := *value.Interface().(*dao.User)
 	user.Password = utils.Encryption(user.Password)
+	nowTime := time.Now()
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return "系统正在开小差,请稍后"
+	}
+	nowTime = nowTime.In(loc)
+	user.Create_time = nowTime
+	user.Update_time = nowTime
 	err = dao.NewUserDao().InsertUser(user)
 	if err != nil {
 		return err.Error()
