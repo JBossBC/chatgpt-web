@@ -22,7 +22,9 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://112.124.53.234:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_CREATE_TOPICS: "chatgpt-web-log"
     restart: always
 
   broker2:
@@ -69,17 +71,27 @@ services:
       - ./server.crt:/usr/server.crt
       - ./server.key:/usr/server.key
   web:
+    container_name: fontend
     build: 
       dockerfile: ./deployments/produce/server/fontend.dockerfile
       context: ../
+    restart: always  
     ports:
       - "3000:3000"
   backend:
+    
+    container_name: backend
     build: 
        dockerfile: ./deployments/produce/server/backend.dockerfile   
        context: ../ 
     ports:
       - "8080:8080"
+    restart: always
+    depends_on:
+      - broker1
+      - broker2
+      - mysql
+      - redis   
 
 
 volumes:

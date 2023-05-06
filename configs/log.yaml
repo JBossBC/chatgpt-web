@@ -1,10 +1,7 @@
-Network:
-Address:
+Network: "tcp"
+Address: "broker1:9092"
 StartConnPool: True
 ConnConfig:
-  ClientID: 
-  Topic:
-  Partition:
-  Broker:
-  Rack:
-  TransactionalID:
+  Topic:  "chatgpt-web-log"
+  Partition:  4
+  # Broker:   3
