@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -33,7 +32,7 @@ type connConfig struct {
 const defaultConnsNumber = 100
 const defaultStartConnPool = true
 const defaultNetwork = "tcp"
-const defaultEnvironment = "log_produce"
+const defaultEnvironment = "./configs/log_produce"
 
 // const defaultStripNumber = 5
 
@@ -47,7 +46,7 @@ var config LogConfig = LogConfig{
 
 //TODO envrionment difference
 func init() {
-	value := os.Getenv("chatgpt-web")
+	value := os.Getenv("chatgpt-web-log")
 	if value == "" {
 		value = defaultEnvironment
 	}
@@ -55,13 +54,8 @@ func init() {
 	// if err != nil {
 	// 	panic(fmt.Sprintf("log:log init error %s", err.Error()))
 	// }
-	absPath := strings.Builder{}
-	// absPath.WriteString(dir)
-	absPath.WriteString("./configs")
-	absPath.WriteRune(filepath.Separator)
-	absPath.WriteString(value)
-	absPath.WriteString(".yaml")
-	file, err := os.OpenFile(absPath.String(), os.O_RDONLY, os.ModePerm)
+	fmt.Printf("initing the log config %s\n", value)
+	file, err := os.OpenFile(value, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		panic(fmt.Sprintf("log:log init error %s", err.Error()))
 	}

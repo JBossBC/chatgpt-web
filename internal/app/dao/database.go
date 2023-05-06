@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/yaml.v3"
@@ -35,16 +33,20 @@ var gormDB *gorm.DB
 
 var redisClient *redis.Client
 
+const defaultDatabaseConfig = "./config/database.yaml"
+
 //TODO envrionment difference
 func init() {
-	sb := strings.Builder{}
+	value := os.Getenv("chatgpt-web-database")
+	if value == "" {
+		value = defaultDatabaseConfig
+	}
 	// wd, err := os.Getwd()
-	sb.WriteString("./configs")
-	sb.WriteRune(filepath.Separator)
 	//TODO command line params to set
-	sb.WriteString("database_produce.yaml")
-	file, err := os.OpenFile(sb.String(), os.O_RDONLY, os.ModePerm)
+	fmt.Printf("initing the database config %s\n", value)
+	file, err := os.OpenFile(value, os.O_RDONLY, os.ModePerm)
 	if err != nil {
+		fmt.Println(err)
 		panic(err.Error())
 	}
 	err = yaml.NewDecoder(file).Decode(databaseConfig)
