@@ -50,9 +50,9 @@ const login =()=>{
              </Alert>
              </div>:<></>}
             </div>
-            <div className="absolute right-60 w-96 mr-15 flex float-right content-center form rounded-6">
+            <div className="absolute bottom-32 right-60 w-96 mr-15 flex float-right content-center rounded-sm">
                 <div className=" justify-center self-center flex-initial bg-white rounded-sm">
-                    <div className="flex justify-center text-3xl pb-10">
+                    <div className="flex justify-center text-3xl pb-10 pt-10">
                         登录
                     </div>
                         <div className=" bg-white form-input border-0 flex justify-center">

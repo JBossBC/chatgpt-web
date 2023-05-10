@@ -82,9 +82,9 @@ const register = () => {
                  </Alert>
                  </div>:<></>}
                 </div>
-                <div className="absolute right-60 w-96 mr-15 flex float-right content-center form rounded-6">
+                <div className="absolute right-60 bottom-32 w-96 mr-15 flex float-right content-center form rounded-6">
                     <div className=" justify-center self-center flex-initial bg-white rounded-sm">
-                        <div className="flex justify-center text-3xl pb-10">
+                        <div className="flex justify-center pt-10 text-3xl pb-10">
                             注册
                         </div>
                             <div className=" bg-white form-input border-0 flex justify-center">
@@ -102,7 +102,7 @@ const register = () => {
                             <div  className=" bg-white form-input border-0 flex justify-center ">
                                 <label htmlFor="verification"  className="white  mr-3 text-lg align-middle ">验证码:</label>
                                 <input type="text" id="verification" className="w-42 border-1 rounded-full" onChange={(event)=>setUser({...user,verification:event.target.value})}></input>
-                                {!verification?<button className="w-1/5 button rounded-full" onClick={sendVerification}>发送</button>:<button className="w-1/3 button rounded-full" disabled="disabled">{timeSend}后重试</button>}
+                                {!verification?<button className="w-1/5 button rounded-full ml-2" onClick={sendVerification}>发送</button>:<button className="w-1/3 button rounded-full" disabled="disabled">{timeSend}后重试</button>}
                             </div>
                             <div className="flex h-10 mt-10 mb-3 justify-center">
                                 <button onClick={toRegister} className="w-4/5  rounded-full text-center button ">注册</button>
