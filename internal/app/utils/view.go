@@ -1,4 +1,4 @@
-package controller
+package utils
 
 type View struct {
 	Result string

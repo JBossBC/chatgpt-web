@@ -8,6 +8,7 @@ import (
 
 func main() {
 	engine := gin.New()
+	engine.Use()
 	chatGroup := engine.Group("/chat")
 	{
 		chatGroup.POST("/", controller.ChatHandler)

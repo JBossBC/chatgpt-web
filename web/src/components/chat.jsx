@@ -12,6 +12,11 @@ const chat = () => {
     title:"",
     context:"",
 })
+const [infoList,setInfoList]=useState([]);
+const [info,setInfo]=useState(null);
+function sendInfo(){
+
+}
 function evalErrorAlert(title,context){
   setNotice(true)
   setErrInfo({
@@ -27,6 +32,7 @@ useEffect(()=>{
      },3000)
   }
 },[notice])
+
   return (
    <>
    <div className="w-full h-full">
@@ -49,12 +55,12 @@ useEffect(()=>{
                </div>
           </div>
         </div>
-        <div className="flex flex-col w-full h-5/6">
-                  <div className=" w-1/3 border-2 m-4">
+        <div className="flex flex-row w-full h-5/6">
+                  <div className=" w-1/3 border-2 m-4 overflow-clip">
                       <div>
                         <p className="  text-center text-2xl">模型</p>
                       </div>
-                      <div className=" h-1/2 overflow-scroll">
+                      <div className=" h-1/2 ">
                            <div className=" mt-2 mb-2 px-2 ">
                                <div className=" felx flex-col ">
                                   <span className=" mr-6">
@@ -160,6 +166,16 @@ useEffect(()=>{
                                </div>
                             </div> 
                       </div>
+                  </div>
+                  <div className=" w-2/3 flex-col flex">
+                     <div className=" h-5/6">
+                        {}
+                     </div>
+                     <div className=" h-1/6 flex flex-row">
+                         <input type="text" className=" overflow-scroll" value={(info)=>sendInfo(info)}></input>
+                         <button className="" onClick={sendInfo}>发送</button>
+                     </div>
+
                   </div>
         </div>
    </div>

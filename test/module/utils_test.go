@@ -2,6 +2,8 @@ package test
 
 import (
 	"chatgpt-web/internal/app/utils"
+
+	"chatgpt-web/internal/app/dao"
 	"fmt"
 	"reflect"
 	"testing"
@@ -27,4 +29,9 @@ func TestMapMarshal(t *testing.T) {
 		fmt.Println(err.Error())
 	}
 	fmt.Printf("%v", value)
+}
+
+func TestJWTMarshal(t *testing.T) {
+	user := dao.NewUser("xiyang")
+	fmt.Println(utils.MarshalJWT(user))
 }
