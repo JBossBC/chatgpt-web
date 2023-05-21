@@ -38,6 +38,10 @@ const login =()=>{
             return
         }
         //TODO业务处理
+
+        //跳转页面,模态框
+
+        window.location.href= "/chat";
     }
     return (
         <div className="w-full h-full ">

@@ -33,7 +33,7 @@ var gormDB *gorm.DB
 
 var redisClient *redis.Client
 
-const defaultDatabaseConfig = "./config/database.yaml"
+const defaultDatabaseConfig = "./configs/database.yaml"
 
 //TODO envrionment difference
 func init() {

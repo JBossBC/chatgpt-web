@@ -95,7 +95,10 @@ services:
     container_name: backend
     build: 
        dockerfile: ./deployments/produce/server/backend.dockerfile   
-       context: ../ 
+       context: ../
+    environment:
+       chatgpt-web-log: ./configs/log_produce.yaml
+       chatgpt-web-database: ./configs/database_produce.yaml
     ports:
       - "8080:8080"
     restart: always

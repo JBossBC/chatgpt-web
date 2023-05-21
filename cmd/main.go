@@ -2,16 +2,17 @@ package main
 
 import (
 	"chatgpt-web/internal/app/controller"
+	"chatgpt-web/internal/app/middlerware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	engine := gin.New()
-	engine.Use()
+	engine.Use(middlerware.JWT)
 	chatGroup := engine.Group("/chat")
 	{
-		chatGroup.POST("/", controller.ChatHandler)
+		chatGroup.GET("/", controller.ChatHandler)
 	}
 	userGroup := engine.Group("/user")
 	{
